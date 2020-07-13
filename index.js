@@ -8,6 +8,8 @@ var request = require('request')
 var child = require('child-process-promise')
 var vdf = require('vdf')
 
+const useHyphen = ["beta"]
+
 var _ = {}
 _.defaults = require('lodash.defaults')
 
@@ -36,7 +38,7 @@ var download = function (opts) {
     if (process.platform !== 'win32') {
       req = req.pipe(require('zlib').createGunzip())
     }
-    req.pipe(extractor.Extract({path: opts.binDir})
+    req.pipe(extractor.Extract({ path: opts.binDir })
       .on('finish', resolve)
       .on('error', reject)
     )
@@ -66,6 +68,7 @@ var run = function (commands, opts) {
     return Promise.reject('Unsupported platform')
   }
   var args = commands.concat('quit').map(function (x) {
+    if (useHyphen.indexOf(x.split(" ")[0]) > -1) return '-' + x
     return '+' + x
   }).join(' ').split(' ')
   return new Promise(function (resolve, reject) {
@@ -139,6 +142,8 @@ var updateApp = function (appId, installDir, opts) {
     throw new TypeError('installDir must be an absolute path in updateApp')
   }
   var commands = ['@ShutdownOnFailedCommand 0', 'login anonymous', 'force_install_dir ' + installDir, 'app_update ' + appId]
+
+  if (opts.beta) commands.push(`beta ${ opts.beta }`)
   if (parseInt(appId, 10) === 90) {
     commands = commands.concat('app_update ' + appId)
   }
